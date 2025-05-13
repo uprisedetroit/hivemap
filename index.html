@@ -1,223 +1,221 @@
-<style>
-  /* Toggle button */
-  #toggleSidebar {
-    display: none;
-    position: absolute;
-    top: 20px; right: 20px; z-index: 10;
-    background: #fff; border: none; border-radius: 6px;
-    padding: 8px 12px; font-size: 1rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer;
-  }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Location Map</title>
 
-  /* Map container */
-  #map-container { position: relative; width: 100%; height: 600px; }
-  #map { width: 100%; height: 110%; }
-  
+  <!-- PapaParse for CSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-  /* Sidebar */
-  #sidebar {
-    position: absolute; top: 20px; left: 20px;
-    width: 280px; background: #fff; border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    padding: 20px; overflow-y: auto; max-height: 90%;
-    z-index: 5;
-  }
-  #searchBox {
-    width:100%; padding:8px; margin-bottom:20px;
-    box-sizing:border-box; border:1px solid #ccc;
-    border-radius:8px;
-  }
-  .location-item {
-    margin-bottom:15px; cursor:pointer;
-    padding:5px 0; border-bottom:1px solid #eee;
-  }
-  .location-item:last-child { border-bottom:none; }
-  .location-item:hover {
-    background:#f5f5f5; border-radius:8px;
-  }
+  <style>
+    /* Toggle button */
+    #toggleSidebar {
+      display: none;
+      position: absolute;
+      top: 20px; right: 20px; z-index: 10;
+      background: #fff; border: none; border-radius: 6px;
+      padding: 8px 12px; font-size: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer;
+    }
 
-  /* Marker label */
-  .custom-marker-label {
-    color:#000; font-weight:bold; font-size:14px;
-    text-shadow:0 0 3px #fff; white-space:nowrap;
-  }
+    /* Map container */
+    #map-container { position: relative; width: 100%; height: 600px; }
+    #map { width: 100%; height: 100%; }
 
-  /* InfoWindow card */
-  .info-card {
-    display:flex; width:350px; border-radius:8px;
-    overflow:hidden; font-family:Arial,sans-serif;
-    box-shadow:0 4px 12px rgba(0,0,0,0.2);
-  }
-  .info-card-icon {
-    flex:1; background:#253B1E;
-    display:flex; align-items:center;
-    justify-content:center;
-  }
-  .info-card-icon img { width:80%; height:auto; }
-  .info-card-content {
-    flex:4; padding:12px;
-    background:#fff; color:#253B1E;
-  }
-  .info-card-code {
-    margin:0; font-size:1.2em; font-weight:bold;
-    color:#253B1E;
-  }
-  .info-card-title {
-    margin:4px 0 8px; font-size:1em; color:#444;
-  }
-  .info-card-description {
-    margin:0; font-size:0.9em; line-height:1.3;
-    color:#555;
-  }
-
-  /* Strip default InfoWindow chrome */
-  .gm-style .gm-style-iw,
-  .gm-style .gm-style-iw-c,
-  .gm-style .gm-style-iw-d {
-    background:transparent!important;
-    box-shadow:none!important;
-    overflow:visible!important;
-  }
-  .gm-style .gm-style-iw-s,
-  .gm-style .gm-style-iw-t::after,
-  .gm-style .gm-style-iw-t::before {
-    display:none!important;
-  }
-  .gm-style .gm-style-iw button.gm-ui-hover-effect {
-    background:transparent!important;
-    border:none!important;
-    box-shadow:none!important;
-  }
-  .gm-style .gm-style-iw button.gm-ui-hover-effect:hover {
-    background:rgba(0,0,0,0.1)!important;
-  }
-  .gm-style .gm-ui-hover-effect {
-    position:absolute!important; top:12px!important;
-    right:12px!important; z-index:20!important;
-  }
-
-  /* Mobile tweaks */
-  @media (max-width: 600px) {
-    #toggleSidebar { display: block; }
+    /* Sidebar */
     #sidebar {
-      left: -300px; transition: left 0.3s ease;
-      width: 250px; top: 60px;
-      max-height: calc(100% - 80px);
+      position: absolute; top: 20px; left: 20px;
+      width: 280px; background: #fff; border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      padding: 20px; overflow-y: auto; max-height: 90%;
+      z-index: 5;
     }
-    #sidebar.open { left: 20px; }
+    #searchBox {
+      width:100%; padding:8px; margin-bottom:20px;
+      box-sizing:border-box; border:1px solid #ccc;
+      border-radius:8px;
+    }
+    .location-item {
+      margin-bottom:15px; cursor:pointer;
+      padding:5px 0; border-bottom:1px solid #eee;
+    }
+    .location-item:last-child { border-bottom:none; }
+    .location-item:hover {
+      background:#f5f5f5; border-radius:8px;
+    }
 
-    /* Make InfoWindow card 80% of viewport width */
+    /* Marker label */
+    .custom-marker-label {
+      color:#000; font-weight:bold; font-size:14px;
+      text-shadow:0 0 3px #fff; white-space:nowrap;
+    }
+
+    /* InfoWindow card */
     .info-card {
-      width: 80vw !important;
-      max-width: none;
+      display:flex; width:350px; border-radius:8px;
+      overflow:hidden; font-family:Arial,sans-serif;
+      box-shadow:0 4px 12px rgba(0,0,0,0.2);
     }
-  }
-</style>
+    .info-card-icon {
+      flex:1; background:#253B1E;
+      display:flex; align-items:center;
+      justify-content:center;
+    }
+    .info-card-icon img { width:80%; height:auto; }
+    .info-card-content {
+      flex:4; padding:12px;
+      background:#fff; color:#253B1E;
+    }
+    .info-card-code {
+      margin:0; font-size:1.2em; font-weight:bold;
+      color:#253B1E;
+    }
+    .info-card-title {
+      margin:4px 0 8px; font-size:1em; color:#444;
+    }
+    .info-card-description {
+      margin:0; font-size:0.9em; line-height:1.3;
+      color:#555;
+    }
 
-<div id="map-container">
-  <div id="sidebar">
-    <input type="text" id="searchBox" placeholder="Search locations…">
-    <div id="locationList"></div>
-  </div>
-  <div id="map"></div>
-</div>
+    /* Strip default InfoWindow chrome */
+    .gm-style .gm-style-iw,
+    .gm-style .gm-style-iw-c,
+    .gm-style .gm-style-iw-d {
+      background:transparent!important;
+      box-shadow:none!important;
+      overflow:visible!important;
+    }
+    .gm-style .gm-style-iw-s,
+    .gm-style .gm-style-iw-t::after,
+    .gm-style .gm-style-iw-t::before {
+      display:none!important;
+    }
+    .gm-style .gm-style-iw button.gm-ui-hover-effect {
+      background:transparent!important;
+      border:none!important;
+      box-shadow:none!important;
+    }
+    .gm-style .gm-style-iw button.gm-ui-hover-effect:hover {
+      background:rgba(0,0,0,0.1)!important;
+    }
+    .gm-style .gm-ui-hover-effect {
+      position:absolute!important; top:12px!important;
+      right:12px!important; z-index:20!important;
+    }
 
-<script async
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDjy_ekU4dpuOtHIsDEppDWpXe5yX2h40I&callback=initMap">
-</script>
-
-<script>
-  let map, markers = [], infoWindows = [], parsedData = [];
-  let gradientCircles = [], outlineCircles = [];
-
-  const milesToMeters = m => m * 1609.34;
-  const gradientStops = [
-    { radius: milesToMeters(1), opacity: 0.6 },
-    { radius: milesToMeters(2), opacity: 0.4 },
-    { radius: milesToMeters(3), opacity: 0.2 }
-  ];
-
-  function initMap() {
-    map = new google.maps.Map(document.getElementById('map'), {
-      center: { lat:42.45, lng:-83.38 },
-      zoom:10,
-      mapTypeControl:false,
-      streetViewControl:false,
-      styles:[
-        { elementType:'labels', stylers:[{visibility:'off'}] },
-        { featureType:'poi.business', stylers:[{visibility:'off'}] }
-      ]
-    });
-
-    Papa.parse(
-      'https://docs.google.com/spreadsheets/d/e/2PACX-1vSiakI1pWOavYavYcFPfiOWKjNYD6jMgtoucgXly_ylo_tR9LS0MZH7QZQY8LKNuuGxuVVQWA1Kc0wu/pub?output=csv',
-      { download:true, complete: results => {
-          parsedData = results.data
-            .slice(1)
-            .filter(r => r.length >= 5 && r[3] && r[4])
-            .map(r => ({
-              label: r[0].trim(),
-              title: r[1].trim(),
-              description: r[2].trim(),
-              position: { lat: +r[3], lng: +r[4] }
-            }));
-          renderLocations();
-          wireUpSearch();
-        }
+    /* Mobile tweaks */
+    @media (max-width: 600px) {
+      #toggleSidebar { display: block; }
+      #sidebar {
+        left: -300px; transition: left 0.3s ease;
+        width: 250px; top: 60px;
+        max-height: calc(100% - 80px);
       }
-    );
-  }
+      #sidebar.open { left: 20px; }
 
-  function clearAllCircles() {
-    gradientCircles.forEach(c=>c.setMap(null));
-    outlineCircles.forEach(c=>c.setMap(null));
-    gradientCircles = [];
-    outlineCircles = [];
-  }
+      .info-card {
+        width: 80vw !important;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
 
-  function renderLocations() {
-    document.getElementById('locationList').innerHTML = '';
-    parsedData.forEach((loc,i) => {
-      const icon = {
-        url:'https://raw.githubusercontent.com/uprisedetroit/bitd/d19a79d261467667bd69cb8a61906cbcce118e63/bitd2.svg',
-        scaledSize:new google.maps.Size(32,32),
-        labelOrigin:new google.maps.Point(16,40)
-      };
+<body>
+  <div id="map-container">
+    <div id="sidebar">
+      <input type="text" id="searchBox" placeholder="Search locations…">
+      <div id="locationList"></div>
+    </div>
+    <div id="map"></div>
+  </div>
 
-      const content = 
-        <div class="info-card">
-          <div class="info-card-icon">
-            <img src="${icon.url}" alt="${loc.label}">
-          </div>
-          <div class="info-card-content">
-            <h4 class="info-card-code">${loc.label}</h4>
-            <h5 class="info-card-title">${loc.title}</h5>
-            <p class="info-card-description">${loc.description}</p>
-          </div>
-        </div>;
+  <!-- Load Maps API first, async -->
+  <script
+    async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDjy_ekU4dpuOtHIsDEppDWpXe5yX2h40I&callback=initMap">
+  </script>
 
-      const marker = new google.maps.Marker({
-        position:loc.position,
-        map,
-        icon,
-        label:{ text: loc.label, className:'custom-marker-label' }
+  <script>
+    let map, markers = [], infoWindows = [], parsedData = [];
+    let gradientCircles = [], outlineCircles = [];
+
+    const milesToMeters = m => m * 1609.34;
+    const gradientStops = [
+      { radius: milesToMeters(1), opacity: 0.6 },
+      { radius: milesToMeters(2), opacity: 0.4 },
+      { radius: milesToMeters(3), opacity: 0.2 }
+    ];
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat:42.45, lng:-83.38 },
+        zoom:10,
+        mapTypeControl:false,
+        streetViewControl:false,
+        styles:[
+          { elementType:'labels', stylers:[{visibility:'off'}] },
+          { featureType:'poi.business', stylers:[{visibility:'off'}] }
+        ]
       });
-      const info = new google.maps.InfoWindow({ content, maxWidth:350 });
 
-      // default gradient fill
-      gradientStops.forEach(stop => {
-        gradientCircles.push(new google.maps.Circle({
-          strokeOpacity:0,
-          fillColor:'#F6C22F',
-          fillOpacity:stop.opacity,
-          map, center:loc.position, radius:stop.radius
-        }));
-      });
+      Papa.parse(
+        'https://docs.google.com/spreadsheets/d/e/2PACX-1vSiakI1pWOavYavYcFPfiOWKjNYD6jMgtoucgXly_ylo_tR9LS0MZH7QZQY8LKNuuGxuVVQWA1Kc0wu/pub?output=csv',
+        { download: true, complete: results => {
+            parsedData = results.data
+              .slice(1)
+              .filter(r => r.length >= 5 && r[3] && r[4])
+              .map(r => ({
+                label: r[0].trim(),
+                title: r[1].trim(),
+                description: r[2].trim(),
+                position: { lat: +r[3], lng: +r[4] }
+              }));
+            renderLocations();
+            wireUpSearch();
+          }
+        }
+      );
+    }
 
-      marker.addListener('click', () => {
-        clearAllCircles();
+    function clearAllCircles() {
+      gradientCircles.forEach(c=>c.setMap(null));
+      outlineCircles.forEach(c=>c.setMap(null));
+      gradientCircles = [];
+      outlineCircles = [];
+    }
 
-        // redraw gradient
+    function renderLocations() {
+      document.getElementById('locationList').innerHTML = '';
+      parsedData.forEach((loc,i) => {
+        const icon = {
+          url:'https://raw.githubusercontent.com/uprisedetroit/bitd/d19a79d261467667bd69cb8a61906cbcce118e63/bitd2.svg',
+          scaledSize:new google.maps.Size(32,32),
+          labelOrigin:new google.maps.Point(16,40)
+        };
+
+        const content = `
+          <div class="info-card">
+            <div class="info-card-icon">
+              <img src="${icon.url}" alt="${loc.label}">
+            </div>
+            <div class="info-card-content">
+              <h4 class="info-card-code">${loc.label}</h4>
+              <h5 class="info-card-title">${loc.title}</h5>
+              <p class="info-card-description">${loc.description}</p>
+            </div>
+          </div>`;
+
+        const marker = new google.maps.Marker({
+          position:loc.position,
+          map,
+          icon,
+          label:{ text: loc.label, className:'custom-marker-label' }
+        });
+        const info = new google.maps.InfoWindow({ content, maxWidth:350 });
+
         gradientStops.forEach(stop => {
           gradientCircles.push(new google.maps.Circle({
             strokeOpacity:0,
@@ -227,62 +225,68 @@
           }));
         });
 
-        // draw green outlines
-        [1,2,3].forEach((mi,idx) => {
-          outlineCircles.push(new google.maps.Circle({
-            strokeColor:'#253B1E',
-            strokeOpacity:[1,0.75,0.5][idx],
-            strokeWeight:2,
-            fillOpacity:0,
-            map, center:loc.position,
-            radius:milesToMeters(mi)
-          }));
+        marker.addListener('click', () => {
+          clearAllCircles();
+          gradientStops.forEach(stop => {
+            gradientCircles.push(new google.maps.Circle({
+              strokeOpacity:0,
+              fillColor:'#F6C22F',
+              fillOpacity:stop.opacity,
+              map, center:loc.position, radius:stop.radius
+            }));
+          });
+          [1,2,3].forEach((mi,idx) => {
+            outlineCircles.push(new google.maps.Circle({
+              strokeColor:'#253B1E',
+              strokeOpacity:[1,0.75,0.5][idx],
+              strokeWeight:2,
+              fillOpacity:0,
+              map, center:loc.position,
+              radius:milesToMeters(mi)
+            }));
+          });
+          if(window.innerWidth <= 600) map.panTo(loc.position);
+          infoWindows.forEach(w=>w.close());
+          info.open(map,marker);
         });
 
-        // center on mobile, then open popup
-        if(window.innerWidth <= 600) {
-          map.panTo(loc.position);
-        }
-        infoWindows.forEach(w=>w.close());
-        info.open(map,marker);
+        markers.push(marker);
+        infoWindows.push(info);
+
+        const item = document.createElement('div');
+        item.className = 'location-item';
+        item.dataset.index = i;
+        item.innerHTML = `<strong>${loc.label}</strong> - ${loc.title}`;
+        item.onclick = () => {
+          google.maps.event.trigger(marker,'click');
+          map.setZoom(13);
+          if(window.innerWidth <= 600) {
+            sidebar.classList.remove('open');
+            toggleBtn.style.display = 'block';
+          }
+        };
+        document.getElementById('locationList').appendChild(item);
       });
+    }
 
-      markers.push(marker);
-      infoWindows.push(info);
+    function wireUpSearch() {
+      document.getElementById('searchBox').addEventListener('input', function(){
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('.location-item').forEach(item => {
+          const loc = parsedData[+item.dataset.index];
+          item.style.display = (loc.label+' '+loc.title).toLowerCase().includes(q) ? 'block' : 'none';
+        });
+      });
+    }
 
-      // sidebar item
-      const item = document.createElement('div');
-      item.className = 'location-item';
-      item.dataset.index = i;
-      item.innerHTML = <strong>${loc.label}</strong> - ${loc.title};
-      item.onclick = () => {
-        google.maps.event.trigger(marker,'click');
-        map.setZoom(13);
-        if(window.innerWidth <= 600) {
-          sidebar.classList.remove('open');
-          toggleBtn.style.display = 'block';
-        }
+    document.addEventListener('DOMContentLoaded', () => {
+      window.sidebar = document.getElementById('sidebar');
+      window.toggleBtn = document.getElementById('toggleSidebar');
+      toggleBtn.onclick = () => {
+        sidebar.classList.toggle('open');
+        if (sidebar.classList.contains('open')) toggleBtn.style.display = 'none';
       };
-      document.getElementById('locationList').appendChild(item);
     });
-  }
-
-  function wireUpSearch() {
-    document.getElementById('searchBox').addEventListener('input', function(){
-      const q = this.value.toLowerCase();
-      document.querySelectorAll('.location-item').forEach(item => {
-        const loc = parsedData[+item.dataset.index];
-        item.style.display = (loc.label+' '+loc.title).toLowerCase().includes(q) ? 'block' : 'none';
-      });
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    window.sidebar = document.getElementById('sidebar');
-    window.toggleBtn = document.getElementById('toggleSidebar');
-    toggleBtn.onclick = () => {
-      sidebar.classList.toggle('open');
-      if (sidebar.classList.contains('open')) toggleBtn.style.display = 'none';
-    };
-  });
-</script>
+  </script>
+</body>
+</html>
